@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dinner Time! 🍽️</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .popup {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 30px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.5s ease-out;
+            text-align: center;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .emoji {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        h1 {
+            color: #333;
+            font-size: 32px;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .message {
+            color: #555;
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+
+        .bet-details {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 25px 0;
+            text-align: left;
+            border-radius: 8px;
+        }
+
+        .bet-details h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .bet-details p {
+            color: #666;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .checkmark {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .footer {
+            color: #888;
+            font-size: 14px;
+            margin-top: 25px;
+            font-style: italic;
+        }
+
+        .proof {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e7f3ff;
+            border-radius: 8px;
+        }
+
+        .proof p {
+            color: #0066cc;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .button {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: transform 0.2s;
+        }
+
+        .button:hover {
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 600px) {
+            .popup {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 26px;
+            }
+
+            .message {
+                font-size: 16px;
+            }
+
+            .emoji {
+                font-size: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="popup">
+        <div class="emoji">🍽️</div>
+        <h1>Hey Jingxia!</h1>
+
+        <div class="message">
+            <p><strong>Remember our bet?</strong></p>
+            <p>You owe me dinner! 🎉</p>
+        </div>
+
+        <div class="bet-details">
+            <h3>The Bet:</h3>
+            <p><span class="checkmark">✓</span> Claude allows coding from phone</p>
+            <p><span class="checkmark">✓</span> Cursor allows coding from phone</p>
+            <p style="margin-top: 15px; color: #333; font-weight: 600;">Result: I was right on BOTH counts!</p>
+        </div>
+
+        <div class="proof">
+            <p><strong>Proof:</strong></p>
+            <p>This very popup was coded using Claude on mobile! 📱</p>
+        </div>
+
+        <div class="footer">
+            Time to pay up, friend! 😄<br>
+            I'm thinking something nice... maybe sushi? 🍣
+        </div>
+
+        <a href="#" class="button" onclick="alert('Looking forward to that dinner! 😊'); return false;">
+            Acknowledge Defeat
+        </a>
+    </div>
+
+    <script>
+        // Fun confetti effect when the button is clicked
+        document.querySelector('.button').addEventListener('click', function(e) {
+            setTimeout(() => {
+                document.body.style.animation = 'celebration 0.5s ease-in-out';
+            }, 100);
+        });
+    </script>
+</body>
+</html>
