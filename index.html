@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>小明的棋类世界 ♟️</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0;
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(135deg, #fef9e7 0%, #fadbd8 50%, #d6eaf8 100%);
+    color: #2c3e50;
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+  header {
+    text-align: center;
+    padding: 20px 15px 10px;
+    background: linear-gradient(135deg, #ff9a8b, #ff6a88, #ffc3a0);
+    color: white;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 24px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+  }
+  header p {
+    margin: 5px 0 0;
+    font-size: 13px;
+    opacity: 0.95;
+  }
+  .tabs {
+    display: flex;
+    justify-content: space-around;
+    background: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    position: sticky;
+    top: 78px;
+    z-index: 99;
+  }
+  .tab {
+    flex: 1;
+    text-align: center;
+    padding: 12px 5px;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #888;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+  }
+  .tab.active {
+    color: #ff6a88;
+    border-bottom-color: #ff6a88;
+    background: #fff5f5;
+  }
+  .panel {
+    display: none;
+    padding: 15px;
+    animation: fadeIn 0.4s;
+  }
+  .panel.active { display: block; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .card {
+    background: white;
+    border-radius: 15px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+  }
+  .card h2 {
+    margin: 0 0 10px;
+    font-size: 20px;
+    color: #ff6a88;
+    border-left: 5px solid #ff6a88;
+    padding-left: 10px;
+  }
+  .card h3 {
+    font-size: 16px;
+    color: #5d6d7e;
+    margin: 12px 0 6px;
+  }
+  .card p {
+    font-size: 14px;
+    line-height: 1.7;
+    margin: 6px 0;
+  }
+  .fact-box {
+    background: #fff8e1;
+    border-left: 4px solid #ffb74d;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin: 10px 0;
+    font-size: 13px;
+  }
+  .fact-box strong { color: #e67e22; }
+
+  /* 棋盘相关 */
+  .board-wrap {
+    display: flex;
+    justify-content: center;
+    margin: 12px 0;
+  }
+  canvas {
+    background: #f0c987;
+    border: 3px solid #8b5a2b;
+    border-radius: 8px;
+    max-width: 100%;
+    touch-action: none;
+    box-shadow: 0 4px 10px rgba(139, 90, 43, 0.3);
+  }
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin: 10px 0;
+  }
+  button {
+    background: linear-gradient(135deg, #ff9a8b, #ff6a88);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(255,106,136,0.3);
+    transition: transform 0.1s;
+  }
+  button:active { transform: scale(0.95); }
+  button.secondary {
+    background: linear-gradient(135deg, #74b9ff, #0984e3);
+    box-shadow: 0 2px 5px rgba(9,132,227,0.3);
+  }
+  .status {
+    text-align: center;
+    font-size: 15px;
+    font-weight: bold;
+    padding: 8px;
+    background: #fff5f5;
+    border-radius: 10px;
+    margin: 8px 0;
+    color: #c0392b;
+  }
+  .turn-black { color: #2c3e50; }
+  .turn-white { color: #16a085; }
+
+  /* 首页卡片 */
+  .game-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .game-card {
+    background: white;
+    border-radius: 15px;
+    padding: 18px;
+    text-align: center;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    border: 2px solid transparent;
+    cursor: pointer;
+  }
+  .game-card:active {
+    border-color: #ff6a88;
+    transform: scale(0.98);
+  }
+  .game-card .emoji {
+    font-size: 40px;
+    margin-bottom: 5px;
+  }
+  .game-card h3 {
+    margin: 5px 0;
+    color: #ff6a88;
+  }
+  .game-card p {
+    font-size: 12px;
+    color: #777;
+    margin: 5px 0 0;
+  }
+  /* 中国象棋演示棋盘 */
+  .xiangqi-piece {
+    display: inline-block;
+    width: 38px;
+    height: 38px;
+    line-height: 36px;
+    text-align: center;
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: 18px;
+    margin: 3px;
+    border: 2px solid;
+    background: #fff8dc;
+  }
+  .xq-red { color: #c0392b; border-color: #c0392b; }
+  .xq-black { color: #1a1a1a; border-color: #1a1a1a; }
+  .quiz {
+    background: linear-gradient(135deg, #a8edea, #fed6e3);
+    padding: 12px;
+    border-radius: 12px;
+    margin: 10px 0;
+  }
+  .quiz-q { font-weight: bold; margin-bottom: 8px; font-size: 14px; }
+  .quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .quiz-opt {
+    background: white;
+    padding: 8px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 13px;
+    border: 2px solid #fed6e3;
+    cursor: pointer;
+  }
+  .quiz-opt.right { background: #d4efdf; border-color: #27ae60; }
+  .quiz-opt.wrong { background: #fadbd8; border-color: #c0392b; }
+  .footer-note {
+    text-align: center;
+    font-size: 12px;
+    color: #999;
+    margin-top: 20px;
+    padding: 10px;
+  }
+  .me-bubble {
+    background: #fff;
+    border: 2px dashed #ff6a88;
+    border-radius: 15px;
+    padding: 12px;
+    margin: 10px 0;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .me-bubble::before {
+    content: "👦 ";
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>♟️ 小明的棋类世界 ♟️</h1>
+  <p>顺义六年级小学生 · 棋类爱好者</p>
+</header>
+
+<div class="tabs">
+  <div class="tab active" data-tab="home">首页</div>
+  <div class="tab" data-tab="weiqi">围棋</div>
+  <div class="tab" data-tab="xiangqi">象棋</div>
+  <div class="tab" data-tab="wuziqi">五子棋</div>
+</div>
+
+<!-- 首页 -->
+<div class="panel active" id="home">
+  <div class="card">
+    <h2>欢迎来到我的棋类小站！</h2>
+    <div class="me-bubble">
+      大家好我叫小明！我今年12岁，在顺义读六年级。我最喜欢下棋啦，从一年级就开始学围棋，后来又学了象棋和五子棋。这个网站是我自己做的，给大家介绍我喜欢的三种棋，还可以在上面互动玩一玩，希望你也喜欢！😊
+    </div>
+  </div>
+
+  <div class="game-grid">
+    <div class="game-card" onclick="switchTab('weiqi')">
+      <div class="emoji">⚫⚪</div>
+      <h3>围 棋</h3>
+      <p>最古老的棋 · 19路 · 下点点点</p>
+    </div>
+    <div class="game-card" onclick="switchTab('xiangqi')">
+      <div class="emoji">🔴⚫</div>
+      <h3>中国象棋</h3>
+      <p>楚河汉界 · 将帅对决 · 中国国粹</p>
+    </div>
+    <div class="game-card" onclick="switchTab('wuziqi')">
+      <div class="emoji">🌟</div>
+      <h3>五子棋</h3>
+      <p>五个一连 · 简单好玩 · 可以现在就玩！</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📊 我的棋力</h2>
+    <p>🥇 围棋：业余 3 段（去年考的）</p>
+    <p>🥈 中国象棋：会下，但是经常被我爸爸打败 😂</p>
+    <p>🥉 五子棋：和同学下基本不输！</p>
+    <div class="fact-box">
+      <strong>小知识：</strong>下棋可以让人变聪明哦！我数学成绩从下棋以后变好了好多～
+    </div>
+  </div>
+</div>
+
+<!-- 围棋 -->
+<div class="panel" id="weiqi">
+  <div class="card">
+    <h2>⚫⚪ 围棋介绍</h2>
+    <p>围棋是中国发明的，已经有<strong>4000多年</strong>历史啦！是世界上最古老的棋类游戏之一。</p>
+    <h3>🎯 怎么玩？</h3>
+    <p>棋盘有 <strong>19×19</strong> 条线，交叉点有 361 个。黑棋先下，两个人轮流在交叉点上放棋子。把对方的棋子<strong>"气"</strong>都堵住就能吃掉它，最后谁圈的地盘大谁就赢！</p>
+    <h3>🌟 厉害的地方</h3>
+    <p>围棋的变化比宇宙原子还多！据说有 10 的 170 次方种局面。我超喜欢的棋手是<strong>柯洁</strong>九段，还有日本的<strong>井山裕太</strong>。</p>
+    <div class="fact-box">
+      <strong>冷知识：</strong>2016年 AlphaGo 这个 AI 把世界冠军李世石打败了，全世界都震惊啦！
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>👆 试试在小棋盘上摆子</h2>
+    <p style="font-size:13px;color:#666;">这是 9 路小棋盘（专业的是 19 路），你可以试着摆几个子感受一下，黑白轮流哦～</p>
+    <div class="status" id="weiqi-status">轮到 <span class="turn-black">⚫ 黑棋</span></div>
+    <div class="board-wrap">
+      <canvas id="weiqi-board" width="320" height="320"></canvas>
+    </div>
+    <div class="controls">
+      <button onclick="resetWeiqi()">🔄 重新开始</button>
+      <button class="secondary" onclick="passWeiqi()">⏭️ 让对方下</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🧠 围棋小测验</h2>
+    <div class="quiz">
+      <div class="quiz-q">Q: 围棋的标准棋盘是几路？</div>
+      <div class="quiz-options">
+        <div class="quiz-opt" onclick="quizCheck(this,false)">15 路</div>
+        <div class="quiz-opt" onclick="quizCheck(this,false)">17 路</div>
+        <div class="quiz-opt" onclick="quizCheck(this,true)">19 路</div>
+        <div class="quiz-opt" onclick="quizCheck(this,false)">21 路</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 象棋 -->
+<div class="panel" id="xiangqi">
+  <div class="card">
+    <h2>🔴⚫ 中国象棋介绍</h2>
+    <p>中国象棋也叫"象棋"，是<strong>中国国粹</strong>之一！棋盘中间有一条"楚河汉界"，是从楚汉相争来的故事。</p>
+    <h3>♟️ 都有哪些棋子？</h3>
+    <div style="text-align:center;">
+      <span class="xiangqi-piece xq-red">帅</span>
+      <span class="xiangqi-piece xq-red">仕</span>
+      <span class="xiangqi-piece xq-red">相</span>
+      <span class="xiangqi-piece xq-red">马</span>
+      <span class="xiangqi-piece xq-red">车</span>
+      <span class="xiangqi-piece xq-red">炮</span>
+      <span class="xiangqi-piece xq-red">兵</span>
+    </div>
+    <div style="text-align:center;">
+      <span class="xiangqi-piece xq-black">将</span>
+      <span class="xiangqi-piece xq-black">士</span>
+      <span class="xiangqi-piece xq-black">象</span>
+      <span class="xiangqi-piece xq-black">马</span>
+      <span class="xiangqi-piece xq-black">车</span>
+      <span class="xiangqi-piece xq-black">砲</span>
+      <span class="xiangqi-piece xq-black">卒</span>
+    </div>
+    <h3>📜 各种棋子的走法（点一下看）</h3>
+    <div id="xiangqi-rules">
+      <button onclick="showRule('帅')">帅/将</button>
+      <button onclick="showRule('车')">车</button>
+      <button onclick="showRule('马')">马</button>
+      <button onclick="showRule('炮')">炮</button>
+      <button onclick="showRule('象')">相/象</button>
+      <button onclick="showRule('士')">仕/士</button>
+      <button onclick="showRule('兵')">兵/卒</button>
+    </div>
+    <div class="fact-box" id="rule-display">
+      <strong>提示：</strong>点上面的按钮看走法～
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🎬 经典开局演示</h2>
+    <p style="font-size:13px;color:#666;">这是开局的样子（看起来像是马上要开打了！）</p>
+    <div class="board-wrap">
+      <canvas id="xiangqi-board" width="320" height="356"></canvas>
+    </div>
+    <div class="me-bubble">
+      我最喜欢的开局是<strong>"中炮"</strong>，就是把炮放到中间，威胁对方的中兵！我爸说这是最厉害最经典的开局。
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🧠 象棋小测验</h2>
+    <div class="quiz">
+      <div class="quiz-q">Q: "马走日，象走田"，那"炮"怎么走？</div>
+      <div class="quiz-options">
+        <div class="quiz-opt" onclick="quizCheck(this,false)">走斜线</div>
+        <div class="quiz-opt" onclick="quizCheck(this,true)">直线，吃子要隔一个</div>
+        <div class="quiz-opt" onclick="quizCheck(this,false)">只能走一格</div>
+        <div class="quiz-opt" onclick="quizCheck(this,false)">能跳着走</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 五子棋 -->
+<div class="panel" id="wuziqi">
+  <div class="card">
+    <h2>🌟 五子棋介绍</h2>
+    <p>五子棋超简单！只要把<strong>5 个自己的棋子</strong>连成一条线（横竖斜都行），就赢了！</p>
+    <h3>📖 一点小历史</h3>
+    <p>五子棋是从中国"古代连珠棋"发展来的，后来传到日本叫"连珠"。在日本还是正式比赛项目呢！</p>
+    <div class="fact-box">
+      <strong>小技巧：</strong>下五子棋要会做"活三"和"双四"，让对手堵不过来！
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🎮 来和电脑下一盘吧！</h2>
+    <div class="status" id="wuzi-status">轮到 <span class="turn-black">⚫ 黑棋（你）</span></div>
+    <div class="board-wrap">
+      <canvas id="wuzi-board" width="345" height="345"></canvas>
+    </div>
+    <div class="controls">
+      <button onclick="resetWuzi()">🔄 重新开始</button>
+      <button class="secondary" onclick="undoWuzi()">↩️ 悔一步</button>
+    </div>
+    <div class="me-bubble">
+      电脑不是很强（我自己写的简单 AI 哈哈），但它会防你连成 4 个，也会自己想办法连子。试试能不能赢它～
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🏆 五子棋术语</h2>
+    <p><strong>活三：</strong>三个连一起，两边都没堵，下一步能变活四，超危险！</p>
+    <p><strong>活四：</strong>四个连，两头能赢，对方堵一边还能赢另一边。</p>
+    <p><strong>冲四：</strong>四个连一起但有一头被堵，必须要堵不然就输了。</p>
+    <p><strong>双三：</strong>同时形成两个活三，对方只能堵一个，必胜！</p>
+  </div>
+</div>
+
+<div class="footer-note">
+  ⓒ 2026 小明 · 用爱发电做的网站 ❤️<br>
+  欢迎用手机看～
+</div>
+
+<script>
+/* ========== 切换 ========== */
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelector('.tab[data-tab="'+name+'"]').classList.add('active');
+  document.getElementById(name).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>switchTab(t.dataset.tab));
+});
+
+/* ========== 测验 ========== */
+function quizCheck(el,isRight){
+  if(isRight){
+    el.classList.add('right');
+    el.innerHTML += ' ✅';
+  }else{
+    el.classList.add('wrong');
+    el.innerHTML += ' ❌';
+  }
+}
+
+/* ========== 象棋走法说明 ========== */
+const rules = {
+  '帅': '帅/将只能在"九宫格"里走，一次走一格，横竖都行不能斜着。两个帅不能在同一条直线上没东西挡（叫飞将）！',
+  '车': '车走直线，横竖都行，能走多远就多远，是最厉害的棋子！',
+  '马': '马走"日"字，先走一格直线再走一格斜线。但是马脚那个位置如果有棋子叫"蹩马腿"，就不能走了。',
+  '炮': '炮平时走和车一样，但是<strong>吃子的时候必须隔一个棋子</strong>（叫炮架）才能吃，超级有趣！',
+  '象': '相/象走"田"字，斜着走两格。但是不能过河，"田"字中间有棋子叫"塞象眼"就走不了。',
+  '士': '仕/士只能在九宫格里斜着走一格，是保护帅/将的。',
+  '兵': '兵/卒过河前只能往前走一格；<strong>过了河之后</strong>就可以左右走了，但还是不能后退！'
+};
+function showRule(p){
+  document.getElementById('rule-display').innerHTML = '<strong>'+p+'：</strong>'+rules[p];
+}
+
+/* ========== 围棋（9 路演示） ========== */
+const WQ_N = 9;
+let wqBoard, wqTurn;
+const wqCanvas = document.getElementById('weiqi-board');
+const wqCtx = wqCanvas.getContext('2d');
+const wqCell = wqCanvas.width / (WQ_N + 1);
+
+function resetWeiqi(){
+  wqBoard = Array.from({length:WQ_N},()=>Array(WQ_N).fill(0));
+  wqTurn = 1; // 1=黑 2=白
+  drawWeiqi();
+  updateWqStatus();
+}
+function updateWqStatus(){
+  const s = document.getElementById('weiqi-status');
+  s.innerHTML = '轮到 ' + (wqTurn===1
+    ? '<span class="turn-black">⚫ 黑棋</span>'
+    : '<span class="turn-white">⚪ 白棋</span>');
+}
+function drawWeiqi(){
+  wqCtx.fillStyle = '#f0c987';
+  wqCtx.fillRect(0,0,wqCanvas.width,wqCanvas.height);
+  wqCtx.strokeStyle = '#3c2a14';
+  wqCtx.lineWidth = 1.2;
+  for(let i=0;i<WQ_N;i++){
+    wqCtx.beginPath();
+    wqCtx.moveTo(wqCell, wqCell + i*wqCell);
+    wqCtx.lineTo(wqCell + (WQ_N-1)*wqCell, wqCell + i*wqCell);
+    wqCtx.stroke();
+    wqCtx.beginPath();
+    wqCtx.moveTo(wqCell + i*wqCell, wqCell);
+    wqCtx.lineTo(wqCell + i*wqCell, wqCell + (WQ_N-1)*wqCell);
+    wqCtx.stroke();
+  }
+  // 星位
+  [[2,2],[2,6],[6,2],[6,6],[4,4]].forEach(p=>{
+    wqCtx.beginPath();
+    wqCtx.arc(wqCell+p[0]*wqCell, wqCell+p[1]*wqCell, 3, 0, Math.PI*2);
+    wqCtx.fillStyle = '#3c2a14';
+    wqCtx.fill();
+  });
+  // 棋子
+  for(let i=0;i<WQ_N;i++){
+    for(let j=0;j<WQ_N;j++){
+      if(wqBoard[i][j]){
+        const cx = wqCell + i*wqCell;
+        const cy = wqCell + j*wqCell;
+        const grad = wqCtx.createRadialGradient(cx-4,cy-4,1,cx,cy,wqCell*0.45);
+        if(wqBoard[i][j]===1){
+          grad.addColorStop(0,'#555'); grad.addColorStop(1,'#000');
+        }else{
+          grad.addColorStop(0,'#fff'); grad.addColorStop(1,'#bbb');
+        }
+        wqCtx.beginPath();
+        wqCtx.arc(cx,cy,wqCell*0.42,0,Math.PI*2);
+        wqCtx.fillStyle = grad;
+        wqCtx.fill();
+        wqCtx.strokeStyle = '#222';
+        wqCtx.lineWidth = 0.8;
+        wqCtx.stroke();
+      }
+    }
+  }
+}
+wqCanvas.addEventListener('click',(e)=>handleWqTap(e));
+wqCanvas.addEventListener('touchstart',(e)=>{e.preventDefault();handleWqTap(e.touches[0]);},{passive:false});
+function handleWqTap(ev){
+  const rect = wqCanvas.getBoundingClientRect();
+  const scale = wqCanvas.width / rect.width;
+  const x = (ev.clientX - rect.left) * scale;
+  const y = (ev.clientY - rect.top) * scale;
+  const i = Math.round((x-wqCell)/wqCell);
+  const j = Math.round((y-wqCell)/wqCell);
+  if(i<0||i>=WQ_N||j<0||j>=WQ_N) return;
+  if(wqBoard[i][j]!==0) return;
+  wqBoard[i][j] = wqTurn;
+  // 简单提子：检查相邻对方棋子的气
+  const opp = wqTurn===1?2:1;
+  [[1,0],[-1,0],[0,1],[0,-1]].forEach(d=>{
+    const ni=i+d[0],nj=j+d[1];
+    if(ni>=0&&ni<WQ_N&&nj>=0&&nj<WQ_N&&wqBoard[ni][nj]===opp){
+      const grp = wqGroup(ni,nj);
+      if(!wqHasLiberty(grp)) grp.forEach(([a,b])=>wqBoard[a][b]=0);
+    }
+  });
+  // 检查自己有没有气（不允许自杀）
+  const myGrp = wqGroup(i,j);
+  if(!wqHasLiberty(myGrp)){ wqBoard[i][j]=0; return; }
+  wqTurn = wqTurn===1?2:1;
+  drawWeiqi();
+  updateWqStatus();
+}
+function wqGroup(x,y){
+  const color = wqBoard[x][y];
+  const visited = {};
+  const stack = [[x,y]];
+  const result = [];
+  while(stack.length){
+    const [a,b] = stack.pop();
+    const k = a+','+b;
+    if(visited[k]) continue;
+    visited[k] = true;
+    if(wqBoard[a][b]!==color) continue;
+    result.push([a,b]);
+    [[1,0],[-1,0],[0,1],[0,-1]].forEach(d=>{
+      const na=a+d[0],nb=b+d[1];
+      if(na>=0&&na<WQ_N&&nb>=0&&nb<WQ_N) stack.push([na,nb]);
+    });
+  }
+  return result;
+}
+function wqHasLiberty(group){
+  for(const [a,b] of group){
+    for(const d of [[1,0],[-1,0],[0,1],[0,-1]]){
+      const na=a+d[0],nb=b+d[1];
+      if(na>=0&&na<WQ_N&&nb>=0&&nb<WQ_N&&wqBoard[na][nb]===0) return true;
+    }
+  }
+  return false;
+}
+function passWeiqi(){
+  wqTurn = wqTurn===1?2:1;
+  updateWqStatus();
+}
+
+/* ========== 中国象棋（开局演示） ========== */
+const xqCanvas = document.getElementById('xiangqi-board');
+const xqCtx = xqCanvas.getContext('2d');
+function drawXiangqi(){
+  const W = xqCanvas.width, H = xqCanvas.height;
+  const cols = 9, rows = 10;
+  const cw = W/(cols+1), ch = H/(rows+1);
+  xqCtx.fillStyle = '#f5deb3';
+  xqCtx.fillRect(0,0,W,H);
+  xqCtx.strokeStyle = '#5d4037';
+  xqCtx.lineWidth = 1.2;
+  // 横线
+  for(let i=0;i<rows;i++){
+    xqCtx.beginPath();
+    xqCtx.moveTo(cw, ch+i*ch);
+    xqCtx.lineTo(cw+(cols-1)*cw, ch+i*ch);
+    xqCtx.stroke();
+  }
+  // 竖线（中间断开形成楚河汉界）
+  for(let j=0;j<cols;j++){
+    if(j===0||j===cols-1){
+      xqCtx.beginPath();
+      xqCtx.moveTo(cw+j*cw, ch);
+      xqCtx.lineTo(cw+j*cw, ch+(rows-1)*ch);
+      xqCtx.stroke();
+    }else{
+      xqCtx.beginPath();
+      xqCtx.moveTo(cw+j*cw, ch);
+      xqCtx.lineTo(cw+j*cw, ch+4*ch);
+      xqCtx.stroke();
+      xqCtx.beginPath();
+      xqCtx.moveTo(cw+j*cw, ch+5*ch);
+      xqCtx.lineTo(cw+j*cw, ch+(rows-1)*ch);
+      xqCtx.stroke();
+    }
+  }
+  // 九宫斜线
+  xqCtx.beginPath();
+  xqCtx.moveTo(cw+3*cw, ch); xqCtx.lineTo(cw+5*cw, ch+2*ch);
+  xqCtx.moveTo(cw+5*cw, ch); xqCtx.lineTo(cw+3*cw, ch+2*ch);
+  xqCtx.moveTo(cw+3*cw, ch+7*ch); xqCtx.lineTo(cw+5*cw, ch+9*ch);
+  xqCtx.moveTo(cw+5*cw, ch+7*ch); xqCtx.lineTo(cw+3*cw, ch+9*ch);
+  xqCtx.stroke();
+  // 楚河汉界
+  xqCtx.fillStyle = '#5d4037';
+  xqCtx.font = 'bold 16px serif';
+  xqCtx.textAlign = 'center';
+  xqCtx.textBaseline = 'middle';
+  xqCtx.fillText('楚 河', cw+1.5*cw, ch+4.5*ch);
+  xqCtx.fillText('汉 界', cw+6.5*cw, ch+4.5*ch);
+  // 棋子（开局）
+  const pieces = [
+    // 黑方（上）
+    [0,0,'车','b'],[1,0,'马','b'],[2,0,'象','b'],[3,0,'士','b'],[4,0,'将','b'],
+    [5,0,'士','b'],[6,0,'象','b'],[7,0,'马','b'],[8,0,'车','b'],
+    [1,2,'砲','b'],[7,2,'砲','b'],
+    [0,3,'卒','b'],[2,3,'卒','b'],[4,3,'卒','b'],[6,3,'卒','b'],[8,3,'卒','b'],
+    // 红方（下）
+    [0,9,'车','r'],[1,9,'马','r'],[2,9,'相','r'],[3,9,'仕','r'],[4,9,'帅','r'],
+    [5,9,'仕','r'],[6,9,'相','r'],[7,9,'马','r'],[8,9,'车','r'],
+    [1,7,'炮','r'],[7,7,'炮','r'],
+    [0,6,'兵','r'],[2,6,'兵','r'],[4,6,'兵','r'],[6,6,'兵','r'],[8,6,'兵','r']
+  ];
+  pieces.forEach(p=>{
+    const x = cw+p[0]*cw, y = ch+p[1]*ch;
+    xqCtx.beginPath();
+    xqCtx.arc(x,y,cw*0.42,0,Math.PI*2);
+    xqCtx.fillStyle = '#fff8dc';
+    xqCtx.fill();
+    xqCtx.lineWidth = 2;
+    xqCtx.strokeStyle = p[3]==='r'?'#c0392b':'#1a1a1a';
+    xqCtx.stroke();
+    xqCtx.fillStyle = p[3]==='r'?'#c0392b':'#1a1a1a';
+    xqCtx.font = 'bold 16px serif';
+    xqCtx.fillText(p[2], x, y);
+  });
+}
+
+/* ========== 五子棋（含简单 AI） ========== */
+const WZ_N = 15;
+let wzBoard, wzHistory, wzOver;
+const wzCanvas = document.getElementById('wuzi-board');
+const wzCtx = wzCanvas.getContext('2d');
+const wzCell = wzCanvas.width / (WZ_N + 1);
+
+function resetWuzi(){
+  wzBoard = Array.from({length:WZ_N},()=>Array(WZ_N).fill(0));
+  wzHistory = [];
+  wzOver = false;
+  drawWuzi();
+  document.getElementById('wuzi-status').innerHTML = '轮到 <span class="turn-black">⚫ 黑棋（你）</span>';
+}
+function drawWuzi(){
+  wzCtx.fillStyle = '#f0c987';
+  wzCtx.fillRect(0,0,wzCanvas.width,wzCanvas.height);
+  wzCtx.strokeStyle = '#3c2a14';
+  wzCtx.lineWidth = 1;
+  for(let i=0;i<WZ_N;i++){
+    wzCtx.beginPath();
+    wzCtx.moveTo(wzCell, wzCell + i*wzCell);
+    wzCtx.lineTo(wzCell + (WZ_N-1)*wzCell, wzCell + i*wzCell);
+    wzCtx.stroke();
+    wzCtx.beginPath();
+    wzCtx.moveTo(wzCell + i*wzCell, wzCell);
+    wzCtx.lineTo(wzCell + i*wzCell, wzCell + (WZ_N-1)*wzCell);
+    wzCtx.stroke();
+  }
+  // 中心点
+  wzCtx.beginPath();
+  wzCtx.arc(wzCell+7*wzCell, wzCell+7*wzCell, 3, 0, Math.PI*2);
+  wzCtx.fillStyle = '#3c2a14';
+  wzCtx.fill();
+  // 棋子
+  for(let i=0;i<WZ_N;i++){
+    for(let j=0;j<WZ_N;j++){
+      if(wzBoard[i][j]){
+        const cx = wzCell+i*wzCell, cy = wzCell+j*wzCell;
+        const grad = wzCtx.createRadialGradient(cx-3,cy-3,1,cx,cy,wzCell*0.45);
+        if(wzBoard[i][j]===1){
+          grad.addColorStop(0,'#555'); grad.addColorStop(1,'#000');
+        }else{
+          grad.addColorStop(0,'#fff'); grad.addColorStop(1,'#bbb');
+        }
+        wzCtx.beginPath();
+        wzCtx.arc(cx,cy,wzCell*0.42,0,Math.PI*2);
+        wzCtx.fillStyle = grad;
+        wzCtx.fill();
+      }
+    }
+  }
+  // 标记最后一手
+  if(wzHistory.length){
+    const [lx,ly] = wzHistory[wzHistory.length-1];
+    wzCtx.strokeStyle = '#e74c3c';
+    wzCtx.lineWidth = 2;
+    wzCtx.strokeRect(wzCell+lx*wzCell-5, wzCell+ly*wzCell-5, 10, 10);
+  }
+}
+wzCanvas.addEventListener('click',(e)=>handleWzTap(e));
+wzCanvas.addEventListener('touchstart',(e)=>{e.preventDefault();handleWzTap(e.touches[0]);},{passive:false});
+function handleWzTap(ev){
+  if(wzOver) return;
+  const rect = wzCanvas.getBoundingClientRect();
+  const scale = wzCanvas.width / rect.width;
+  const x = (ev.clientX - rect.left) * scale;
+  const y = (ev.clientY - rect.top) * scale;
+  const i = Math.round((x-wzCell)/wzCell);
+  const j = Math.round((y-wzCell)/wzCell);
+  if(i<0||i>=WZ_N||j<0||j>=WZ_N||wzBoard[i][j]!==0) return;
+  wzPlay(i,j,1);
+  if(wzCheckWin(i,j,1)){ wzWin('🎉 你赢啦！太厉害了！'); return; }
+  if(wzHistory.length>=WZ_N*WZ_N){ wzWin('⚖️ 平局！'); return; }
+  document.getElementById('wuzi-status').innerHTML = '轮到 <span class="turn-white">⚪ 白棋（电脑思考中…）</span>';
+  setTimeout(wzAiMove, 350);
+}
+function wzPlay(i,j,c){
+  wzBoard[i][j] = c;
+  wzHistory.push([i,j,c]);
+  drawWuzi();
+}
+function undoWuzi(){
+  if(wzOver){ resetWuzi(); return; }
+  if(wzHistory.length<2) return;
+  for(let k=0;k<2;k++){
+    const [i,j] = wzHistory.pop();
+    wzBoard[i][j] = 0;
+  }
+  drawWuzi();
+  document.getElementById('wuzi-status').innerHTML = '轮到 <span class="turn-black">⚫ 黑棋（你）</span>';
+}
+function wzWin(msg){
+  wzOver = true;
+  document.getElementById('wuzi-status').innerHTML = msg;
+}
+function wzCheckWin(x,y,c){
+  const dirs = [[1,0],[0,1],[1,1],[1,-1]];
+  for(const [dx,dy] of dirs){
+    let cnt = 1;
+    for(let s=1;s<5;s++){ const a=x+dx*s,b=y+dy*s; if(a<0||a>=WZ_N||b<0||b>=WZ_N||wzBoard[a][b]!==c)break; cnt++; }
+    for(let s=1;s<5;s++){ const a=x-dx*s,b=y-dy*s; if(a<0||a>=WZ_N||b<0||b>=WZ_N||wzBoard[a][b]!==c)break; cnt++; }
+    if(cnt>=5) return true;
+  }
+  return false;
+}
+// 简单 AI：评分每一格，选最高分
+function wzScore(x,y,c){
+  if(wzBoard[x][y]!==0) return -1;
+  const dirs = [[1,0],[0,1],[1,1],[1,-1]];
+  let total = 0;
+  for(const [dx,dy] of dirs){
+    let cnt = 1, openA=false, openB=false;
+    for(let s=1;s<5;s++){ const a=x+dx*s,b=y+dy*s; if(a<0||a>=WZ_N||b<0||b>=WZ_N){break;} if(wzBoard[a][b]===c){cnt++;} else{ if(wzBoard[a][b]===0)openA=true; break;} }
+    for(let s=1;s<5;s++){ const a=x-dx*s,b=y-dy*s; if(a<0||a>=WZ_N||b<0||b>=WZ_N){break;} if(wzBoard[a][b]===c){cnt++;} else{ if(wzBoard[a][b]===0)openB=true; break;} }
+    if(cnt>=5) total += 100000;
+    else if(cnt===4 && openA && openB) total += 10000;
+    else if(cnt===4 && (openA||openB)) total += 1000;
+    else if(cnt===3 && openA && openB) total += 500;
+    else if(cnt===3 && (openA||openB)) total += 100;
+    else if(cnt===2 && openA && openB) total += 50;
+    else if(cnt===2 && (openA||openB)) total += 10;
+    else if(cnt===1) total += 1;
+  }
+  return total;
+}
+function wzAiMove(){
+  let best = -1, bx = 7, by = 7;
+  // 没棋时下中间
+  if(wzHistory.length===1){
+    const [px,py] = wzHistory[0];
+    bx = Math.max(0,Math.min(WZ_N-1,px+1));
+    by = Math.max(0,Math.min(WZ_N-1,py+1));
+    wzPlay(bx,by,2);
+    document.getElementById('wuzi-status').innerHTML = '轮到 <span class="turn-black">⚫ 黑棋（你）</span>';
+    return;
+  }
+  for(let i=0;i<WZ_N;i++){
+    for(let j=0;j<WZ_N;j++){
+      if(wzBoard[i][j]!==0) continue;
+      // 攻 + 防
+      const myScore = wzScore(i,j,2);
+      const oppScore = wzScore(i,j,1) * 0.9;
+      const score = Math.max(myScore, oppScore) + Math.random()*0.5;
+      if(score>best){ best = score; bx = i; by = j; }
+    }
+  }
+  wzPlay(bx,by,2);
+  if(wzCheckWin(bx,by,2)){ wzWin('😅 电脑赢了！再来一局？'); return; }
+  document.getElementById('wuzi-status').innerHTML = '轮到 <span class="turn-black">⚫ 黑棋（你）</span>';
+}
+
+/* ========== 启动 ========== */
+resetWeiqi();
+drawXiangqi();
+resetWuzi();
+</script>
+</body>
+</html>
